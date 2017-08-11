@@ -34,15 +34,6 @@ type Player
   = Player1
   | Player2
 
-gameOver : Model -> Bool
-gameOver model =
-  if model.player1GameScore > 20 && model.player1GameScore > model.player2GameScore + 1 then
-    True
-  else if model.player2GameScore > 20 && model.player2GameScore > model.player1GameScore + 1 then
-    True
-  else
-    False
-
 gameWinner : Model -> Maybe Player
 gameWinner model =
   if model.player1GameScore > 20 && model.player1GameScore > model.player2GameScore + 1 then
