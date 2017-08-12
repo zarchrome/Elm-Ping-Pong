@@ -2,6 +2,9 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 
+-- API for coin flip to pick starting serve
+-- https://www.random.org/integers/?num=1&min=0&max=1&col=3&base=10&format=plain&rnd=new
+
 main =
   Html.beginnerProgram
   { model = initialModel
@@ -15,17 +18,31 @@ type Player
   = Player1
   | Player2
 
+type alias Score = Int
+
+type alias GameScore =
+  { player1 : Score
+  , player2 : Score
+  }
+
+type alias MatchScore =
+  { player1 : Score
+  , player2 : Score
+  }
+
 type alias Model =
-  { player1GameScore : Int
-  , player2GameScore : Int
-  , player1MatchScore : Int
-  , player2MatchScore : Int
+  { gameScore : GameScore
+  , matchScore : MatchScore
   , matchWinner : Maybe Player
   }
 
+newGameScore = GameScore 0 0
+
+newMatchScore = MatchScore 0 0
+
 initialModel : Model
 initialModel =
-  Model 0 0 0 0 Nothing
+  Model newGameScore newMatchScore Nothing
 
 
 -- UPDATE
@@ -37,18 +54,25 @@ type Msg
 
 matchWinner : Model -> Maybe Player
 matchWinner model =
-  if model.player1MatchScore == 2 || model.player1MatchScore == 1 && (gameWinner model) == Just Player1 then
+  if model.matchScore.player1 == 2 || model.matchScore.player1 == 1 && (gameWinner model) == Just Player1 then
     Just Player1
-  else if model.player2MatchScore == 2 || model.player2MatchScore == 1 && (gameWinner model) == Just Player2 then
+  else if model.matchScore.player2 == 2 || model.matchScore.player2 == 1 && (gameWinner model) == Just Player1 then
     Just Player2
   else
     Nothing
 
+wonGame: Score -> Score -> Bool
+wonGame score1 score2 =
+  if score1 > 20 && score1 > score2 + 1 then
+    True
+  else
+    False
+
 gameWinner : Model -> Maybe Player
 gameWinner model =
-  if model.player1GameScore > 20 && model.player1GameScore > model.player2GameScore + 1 then
+  if wonGame model.gameScore.player1 model.gameScore.player2 then
     Just Player1
-  else if model.player2GameScore > 20 && model.player2GameScore > model.player1GameScore + 1 then
+  else if wonGame model.gameScore.player2 model.gameScore.player1 then
     Just Player2
   else
     Nothing
@@ -59,6 +83,27 @@ winnerText model =
     Just Player1 -> "Congrats Player 1"
     Just Player2 -> "Good Job Player 2"
     Nothing -> ""
+
+addItUp intermediateModel =
+  case matchWinner intermediateModel of
+    Just Player1 ->
+      { intermediateModel | matchWinner = Just Player1 }
+    Just Player2 ->
+      { intermediateModel | matchWinner = Just Player2 }
+    Nothing ->
+      case gameWinner intermediateModel of
+        Just Player1 ->
+          let
+            yayMatchScore = MatchScore ( intermediateModel.matchScore.player1 + 1 ) intermediateModel.matchScore.player2
+          in
+          Model newGameScore yayMatchScore Nothing
+        Just Player2 ->
+          let
+            yayMatchScore = MatchScore intermediateModel.matchScore.player1 ( intermediateModel.matchScore.player2 + 1 )
+          in
+          Model newGameScore yayMatchScore Nothing
+        Nothing ->
+          intermediateModel
 
 update : Msg -> Model -> Model
 update msg model =
@@ -71,38 +116,18 @@ update msg model =
       case msg of
         Player1Point ->
           let
-            intermediateModel = { model | player1GameScore = model.player1GameScore + 1 }
+            gS = model.gameScore
+            newScore = { gS | player1 = gS.player1 + 1 }
+            intermediateModel = { model | gameScore = newScore }
           in
-          case matchWinner intermediateModel of
-            Just Player1 ->
-              { intermediateModel | matchWinner = Just Player1 }
-            Just Player2 ->
-              { intermediateModel | matchWinner = Just Player2 }
-            Nothing ->
-              case gameWinner intermediateModel of
-                Just Player1 ->
-                  Model 0 0 ( model.player1MatchScore + 1) model.player2MatchScore Nothing
-                Just Player2 ->
-                  Model 0 0 model.player1MatchScore ( model.player2MatchScore + 1) Nothing
-                Nothing ->
-                  intermediateModel
+          addItUp intermediateModel
         Player2Point ->
           let
-            intermediateModel = { model | player2GameScore = model.player2GameScore + 1 }
+            gS = model.gameScore
+            newScore = { gS | player2 = gS.player2 + 1 }
+            intermediateModel = { model | gameScore = newScore }
           in
-          case matchWinner intermediateModel of
-            Just Player1 ->
-              { intermediateModel | matchWinner = Just Player1 }
-            Just Player2 ->
-              { intermediateModel | matchWinner = Just Player2 }
-            Nothing ->
-              case gameWinner intermediateModel of
-                Just Player1 ->
-                  Model 0 0 ( model.player1MatchScore + 1) model.player2MatchScore Nothing
-                Just Player2 ->
-                  Model 0 0 model.player1MatchScore ( model.player2MatchScore + 1) Nothing
-                Nothing ->
-                  intermediateModel
+          addItUp intermediateModel
         Reset ->
           initialModel
 
@@ -119,15 +144,15 @@ view model =
     Html.div [ id "player1" ]
     [
       Html.h1 [] [ Html.text "p1" ],
-      Html.p [] [ Html.text ( "game: " ++ ( toString model.player1GameScore ) )],
-      Html.p [] [ Html.text ( "match: " ++ ( toString model.player1MatchScore ) )],
+      Html.p [] [ Html.text ( "game: " ++ ( toString model.gameScore.player1 ) )],
+      Html.p [] [ Html.text ( "match: " ++ ( toString model.matchScore.player1 ) )],
       Html.button [ onClick Player1Point ] [ Html.text "+" ]
     ],
     Html.div [ id "player2" ]
     [
       Html.h1 [] [ Html.text "p2" ],
-      Html.p [] [ Html.text ( "game: " ++ ( toString model.player2GameScore ) )],
-      Html.p [] [ Html.text ( "match: " ++ ( toString model.player2MatchScore ) )],
+      Html.p [] [ Html.text ( "game: " ++ ( toString model.gameScore.player2 ) )],
+      Html.p [] [ Html.text ( "match: " ++ ( toString model.matchScore.player2 ) )],
       Html.button [ onClick Player2Point ] [ Html.text "+" ]
       
     ]
