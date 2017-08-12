@@ -18,16 +18,14 @@ type Player
   = Player1
   | Player2
 
-type alias Score = Int
-
 type alias GameScore =
-  { player1 : Score
-  , player2 : Score
+  { player1 : Int
+  , player2 : Int
   }
 
 type alias MatchScore =
-  { player1 : Score
-  , player2 : Score
+  { player1 : Int
+  , player2 : Int
   }
 
 type alias Model =
@@ -44,13 +42,26 @@ initialModel : Model
 initialModel =
   Model newGameScore newMatchScore Nothing
 
+isJust : Maybe a -> Bool
+isJust m = 
+  case m of
+    Just _ ->
+      True
+    Nothing ->
+      False
 
 -- UPDATE
 
 type Msg
-  = Player1Point
-  | Player2Point
+  = NewPoint Player
   | Reset
+
+wonGame: Int -> Int -> Bool
+wonGame score1 score2 =
+  if score1 > 20 && score1 > score2 + 1 then
+    True
+  else
+    False
 
 matchWinner : Model -> Maybe Player
 matchWinner model =
@@ -61,14 +72,6 @@ matchWinner model =
   else
     Nothing
 
-wonGame: Score -> Score -> Bool
-wonGame score1 score2 =
-  if score1 > 20 && score1 > score2 + 1 then
-    True
-  else
-    False
-
-gameWinner : Model -> Maybe Player
 gameWinner model =
   if wonGame model.gameScore.player1 model.gameScore.player2 then
     Just Player1
@@ -84,22 +87,31 @@ winnerText model =
     Just Player2 -> "Good Job Player 2"
     Nothing -> ""
 
+addGamePoint : GameScore -> Player -> GameScore
+addGamePoint gameScore player =
+  case player of
+    Player1 -> { gameScore | player1 = gameScore.player1 + 1 }
+    Player2 -> { gameScore | player2 = gameScore.player2 + 1 }
+
+addMatchPoint : MatchScore -> Player -> MatchScore
+addMatchPoint matchScore player =
+  case player of
+    Player1 -> { matchScore | player1 = matchScore.player1 + 1 }
+    Player2 -> { matchScore | player2 = matchScore.player2 + 1 }
+
 addItUp intermediateModel =
-  case matchWinner intermediateModel of
-    Just Player1 ->
-      { intermediateModel | matchWinner = Just Player1 }
-    Just Player2 ->
-      { intermediateModel | matchWinner = Just Player2 }
+  let
+    gWinner = gameWinner intermediateModel
+    mWinner = matchWinner intermediateModel
+  in
+  case mWinner of
+    Just player ->
+      { intermediateModel | matchWinner = Just player }
     Nothing ->
-      case gameWinner intermediateModel of
-        Just Player1 ->
+      case gWinner of
+        Just player ->
           let
-            yayMatchScore = MatchScore ( intermediateModel.matchScore.player1 + 1 ) intermediateModel.matchScore.player2
-          in
-          Model newGameScore yayMatchScore Nothing
-        Just Player2 ->
-          let
-            yayMatchScore = MatchScore intermediateModel.matchScore.player1 ( intermediateModel.matchScore.player2 + 1 )
+            yayMatchScore = addMatchPoint intermediateModel.matchScore player
           in
           Model newGameScore yayMatchScore Nothing
         Nothing ->
@@ -107,29 +119,16 @@ addItUp intermediateModel =
 
 update : Msg -> Model -> Model
 update msg model =
-  case model.matchWinner of
-    Just Player1 ->
-      model
-    Just Player2 ->
-      model
-    Nothing ->
-      case msg of
-        Player1Point ->
-          let
-            gS = model.gameScore
-            newScore = { gS | player1 = gS.player1 + 1 }
-            intermediateModel = { model | gameScore = newScore }
-          in
-          addItUp intermediateModel
-        Player2Point ->
-          let
-            gS = model.gameScore
-            newScore = { gS | player2 = gS.player2 + 1 }
-            intermediateModel = { model | gameScore = newScore }
-          in
-          addItUp intermediateModel
-        Reset ->
-          initialModel
+  if isJust model.matchWinner then model
+  else case msg of
+      NewPoint player ->
+        let
+          newScore = addGamePoint model.gameScore player
+          intermediateModel = { model | gameScore = newScore }
+        in
+        addItUp intermediateModel
+      Reset ->
+        initialModel
 
 -- VIEW
 
@@ -137,23 +136,31 @@ view : Model -> Html Msg
 view model = 
   Html.div []
   [
-    Html.div [ id "winner" ]
+    Html.node "link"[ href "style.css", rel "stylesheet" ] [],
+    Html.node "header" []
     [
+      Html.h1 [] [ Html.text "Ping Pong Score" ],
       Html.h3 [] [ Html.text (winnerText model) ]
     ],
-    Html.div [ id "player1" ]
+    Html.div [ id "players" ]
     [
-      Html.h1 [] [ Html.text "p1" ],
-      Html.p [] [ Html.text ( "game: " ++ ( toString model.gameScore.player1 ) )],
-      Html.p [] [ Html.text ( "match: " ++ ( toString model.matchScore.player1 ) )],
-      Html.button [ onClick Player1Point ] [ Html.text "+" ]
+      Html.div [ id "player1" ]
+      [
+        Html.p [] [ Html.text "Player 1" ],
+        Html.p [] [ Html.text ( "game: " ++ ( toString model.gameScore.player1 ) )],
+        Html.p [] [ Html.text ( toString model.matchScore.player1 ) ],
+        Html.button [ onClick (NewPoint Player1) ] [ Html.text "+" ]
+      ],
+      Html.div [ id "player2" ]
+      [
+        Html.p [] [ Html.text "Player 2" ],
+        Html.p [] [ Html.text ( "game: " ++ ( toString model.gameScore.player2 ) )],
+        Html.p [] [ Html.text ( toString model.matchScore.player2 ) ],
+        Html.button [ onClick (NewPoint Player2) ] [ Html.text "+" ]
+      ]
     ],
-    Html.div [ id "player2" ]
+    Html.footer []
     [
-      Html.h1 [] [ Html.text "p2" ],
-      Html.p [] [ Html.text ( "game: " ++ ( toString model.gameScore.player2 ) )],
-      Html.p [] [ Html.text ( "match: " ++ ( toString model.matchScore.player2 ) )],
-      Html.button [ onClick Player2Point ] [ Html.text "+" ]
-      
+      Html.button [ onClick Reset ] [ Html.text "Reset" ]
     ]
   ]
