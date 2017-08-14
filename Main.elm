@@ -28,19 +28,26 @@ type alias MatchScore =
   , player2 : Int
   }
 
+type alias CompositeScore =
+  {
+    game : GameScore
+  , match: MatchScore
+  }
+
 type alias Model =
   { gameScore : GameScore
   , matchScore : MatchScore
+  , compositeScore : CompositeScore
   , matchWinner : Maybe Player
   }
 
 newGameScore = GameScore 0 0
-
 newMatchScore = MatchScore 0 0
+newCompositeScore = CompositeScore newGameScore newMatchScore
 
 initialModel : Model
 initialModel =
-  Model newGameScore newMatchScore Nothing
+  Model newGameScore newMatchScore newCompositeScore Nothing
 
 isJust : Maybe a -> Bool
 isJust m = 
@@ -113,7 +120,7 @@ addItUp intermediateModel =
           let
             yayMatchScore = addMatchPoint intermediateModel.matchScore player
           in
-          Model newGameScore yayMatchScore Nothing
+          Model newGameScore yayMatchScore newCompositeScore Nothing
         Nothing ->
           intermediateModel
 
@@ -129,6 +136,39 @@ update msg model =
         addItUp intermediateModel
       Reset ->
         initialModel
+
+n_hasGameWinner : CompositeScore -> Bool
+n_hasGameWinner compositeScore =
+  let
+    p1 = compositeScore.game.player1
+    p2 = compositeScore.game.player1
+  in
+    if p1 > 20 && p1 > p2 + 1 then
+      True
+    else if p2 > 20 && p2 > p1 + 1 then
+      True
+    else
+      False
+
+addToCompositeScore : CompositeScore -> Player -> CompositeScore
+addToCompositeScore s p =
+  if n_hasGameWinner s then
+    s -- really convert to match
+    
+  else
+    case p of
+      Player1 -> 
+        let
+          game = s.game
+          ngs = { game | player1 = game.player1 + 1 }
+        in
+          { s | game = ngs }
+      Player2 -> 
+        let
+          game = s.game
+          ngs = { game | player1 = game.player2 + 1 }
+        in
+          { s | game = ngs }
 
 -- VIEW
 
