@@ -156,13 +156,17 @@ matchScoreText : Score -> Player -> String
 matchScoreText score player =
   case player of
     Player1 ->
-      score.match
-        |> first
-        |> toString
+      let
+        wins = first score.match
+        nonWins = 3 - wins
+      in
+        String.repeat wins "●" ++ String.repeat nonWins "○"
     Player2 ->
-      score.match
-        |> second
-        |> toString
+      let
+        wins = second score.match
+        nonWins = 3 - wins
+      in
+        String.repeat wins "●" ++ String.repeat nonWins "○"
 
 statusText : Model -> String
 statusText model =
