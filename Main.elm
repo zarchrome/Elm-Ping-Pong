@@ -26,14 +26,13 @@ type alias Score =
 
 type alias Model =
   { score: Score
-  , matchWinner : Maybe Player -- del?
   }
 
 newScore = Score (0,0) (0,0)
 
 initialModel : Model
 initialModel =
-  Model newScore Nothing
+  Model newScore
 
 -- UPDATE
 
@@ -107,39 +106,6 @@ addPoint score player =
 
 -- VIEW
 
-view : Model -> Html Msg
-view model = 
-  Html.div []
-  [
-    Html.node "link"[ href "style.css", rel "stylesheet" ] [],
-    Html.node "header" []
-    [
-      Html.h1 [] [ Html.text "Ping Pong Score" ], --,
-      Html.h3 [ class "status" ] [ Html.text ( statusText model ) ]
-    ],
-    Html.div [ id "players" ]
-    [
-      Html.div [ id "player1" ]
-      [
-        Html.p [] [ Html.text "Player 1" ],
-        Html.p [ class "game" ] [ Html.text ( gameScoreText model.score Player1 ) ],
-        Html.p [ class "match" ] [ Html.text ( matchScoreText model.score Player1 ) ],
-        Html.button [ onClick (NewPoint Player1) ] [ Html.text "+" ]
-      ],
-      Html.div [ id "player2" ]
-      [
-        Html.p [] [ Html.text "Player 2" ],
-        Html.p [ class "game" ] [ Html.text ( gameScoreText model.score Player2 ) ],
-        Html.p [ class "match" ] [ Html.text ( matchScoreText model.score Player2 ) ],
-        Html.button [ onClick (NewPoint Player2) ] [ Html.text "+" ]
-      ]
-    ],
-    Html.footer []
-    [
-      Html.button [ onClick Reset ] [ Html.text "Reset" ]
-    ]
-  ]
-
 gameScoreText : Score -> Player -> String
 gameScoreText score player =
   case player of
@@ -179,3 +145,37 @@ statusText model =
       "You Win Player 2"
     Nothing ->
       ""
+
+view : Model -> Html Msg
+view model = 
+  Html.div []
+  [
+    Html.node "link"[ href "style.css", rel "stylesheet" ] [],
+    Html.node "header" []
+    [
+      Html.h1 [] [ Html.text "Ping Pong Score" ], --,
+      Html.h3 [ class "status" ] [ Html.text ( statusText model ) ]
+    ],
+    Html.div [ id "players" ]
+    [
+      Html.div [ id "player1" ]
+      [
+        Html.p [] [ Html.text "Player 1" ],
+        Html.p [ class "game" ] [ Html.text ( gameScoreText model.score Player1 ) ],
+        Html.p [ class "match" ] [ Html.text ( matchScoreText model.score Player1 ) ],
+        Html.button [ onClick (NewPoint Player1) ] [ Html.text "+" ]
+      ],
+      Html.div [ id "player2" ]
+      [
+        Html.p [] [ Html.text "Player 2" ],
+        Html.p [ class "game" ] [ Html.text ( gameScoreText model.score Player2 ) ],
+        Html.p [ class "match" ] [ Html.text ( matchScoreText model.score Player2 ) ],
+        Html.button [ onClick (NewPoint Player2) ] [ Html.text "+" ]
+      ]
+    ],
+    Html.footer []
+    [
+      Html.button [ onClick Reset ] [ Html.text "Reset" ]
+    ]
+  ]
+
