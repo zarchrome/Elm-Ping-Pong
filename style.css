@@ -1,0 +1,32 @@
+body {
+  font: 120% Helvetica;
+  background: darkBlue;
+  color: white;
+  text-align: center;
+}
+
+#players {
+  display: flex;
+}
+
+#player1, #player2 {
+  margin: auto;
+}
+
+.matchScore:after {
+  content: "0 0 0";
+  border: 1px solid red;
+}
+.matchScore.s1:after {
+  content: "X 0 0";
+  border: 1px solid red;
+}
+
+.matchScore.s2:after {
+  content: "X X 0";
+  border: 1px solid red;
+}
+
+*:focus {
+  background: lightGray;
+}
